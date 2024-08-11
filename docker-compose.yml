@@ -5,9 +5,9 @@ services:
     image: postgres:16
     container_name: datalake
     environment:
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_DB: datalake
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: datalake
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
@@ -34,10 +34,133 @@ services:
       - DATABASE_DB=datalake
       - DATABASE_HOST=postgres
 
+  airflow_db:
+    image: postgres:16
+    container_name: airflow_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: airflow_db
+      AIRFLOW__WEBSERVER__SECRET_KEY: S5KrlPywjdvpZuLlXTnjsg==
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: securecookie
+
+    env_file:
+      - .env
+    volumes:
+      - airflow_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  airflow-webserver:
+    build: .
+    container_name: airflow_webserver
+    depends_on:
+      - airflow_db
+      - redis
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: S5KrlPywjdvpZuLlXTnjsg==
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: securecookie
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@airflow_db:5432/airflow_db
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://postgres:postgres@airflow_db:5432/airflow_db
+      AIRFLOW__WEBSERVER__PORT: 8080
+      PYTHONPATH: "/opt/airflow"
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/api:/opt/airflow/api
+      - ./src/helpers:/opt/airflow/helpers
+      - ./src/utils:/opt/airflow/utils
+    restart: always
+    entrypoint: >
+      /bin/bash -c "
+      airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+      exec airflow webserver
+      "
+
+  airflow-scheduler:
+    build: .
+    container_name: airflow_scheduler
+    depends_on:
+      - airflow-webserver
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: S5KrlPywjdvpZuLlXTnjsg==
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: securecookie
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@airflow_db:5432/airflow_db
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://postgres:postgres@airflow_db:5432/airflow_db
+      PYTHONPATH: "/opt/airflow"
+    env_file:
+      - .env
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/api:/opt/airflow/api
+      - ./src/helpers:/opt/airflow/helpers
+      - ./src/utils:/opt/airflow/utils
+    restart: always
+    entrypoint: >
+      /bin/bash -c "
+      exec airflow scheduler
+      "
+
+  airflow-worker:
+    build: .
+    container_name: airflow_worker
+    depends_on:
+      - airflow-webserver
+      - airflow-scheduler
+      - redis
+      - airflow_db
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: S5KrlPywjdvpZuLlXTnjsg==
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: securecookie
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@airflow_db:5432/airflow_db
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://postgres:postgres@airflow_db:5432/airflow_db
+      PYTHONPATH: "/opt/airflow"
+    env_file:
+      - .env
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/api:/opt/airflow/api
+      - ./src/helpers:/opt/airflow/helpers
+      - ./src/utils:/opt/airflow/utils
+    restart: always
+    entrypoint: >
+      /bin/bash -c "
+      exec airflow celery worker
+      "
+
+  redis:
+    image: redis:6.2
+    container_name: airflow_redis
+    ports:
+      - "6379:6379"
+    restart: always   
+
 volumes:
   db_data:
     driver: local
     driver_opts:
       type: none
       device: C:/Users/leona/Projects/datalake
+      o: bind
+      
+  airflow_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./airflow_data
       o: bind

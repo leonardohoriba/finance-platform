@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta, date
 import pdblp
 import settings
-from helpers.aux_functions import upload_dataframe_to_postgresql
+from src.helpers.aux_functions import upload_dataframe_to_postgresql
 
 
 class BbgEquityIndexExtract():

@@ -9,8 +9,6 @@ import numpy as np
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-from datetime import datetime
-import settings
 
 def accumulated_mean(arr):
     if not pd.isnull(arr.iloc[-1]):  # Verifica se o valor de referência (último valor) não é NaN
@@ -63,11 +61,13 @@ def upload_dataframe_to_postgresql(df, table_name, schema_name='public', if_exis
             append: Insert new values to the existing table..
     """
     try:
-        engine = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{quote_plus(os.environ["DATABASE_NAME"])}')
+        # engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/datalake')
+        engine = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{quote_plus(os.environ["DATABASE_NAME"])}',
+                               connect_args={'options': '-csearch_path={}'.format(schema_name)})
         
         # Defina temporariamente o search_path para o schema <schema_name>
-        with engine.connect() as conn:
-            conn.execute(f'SET search_path TO {schema_name}')
+        with engine.begin() as conn:
+            # conn.execute(f'SET search_path TO {schema_name}')
             # Carrega o DataFrame na tabela
             df.to_sql(table_name, con=conn, if_exists=if_exists, index=False, schema=schema_name)
         
@@ -777,94 +777,3 @@ def plot_bars(df, title, xaxis_title, yaxis_title, source=None, height=600, widt
     # Exiba o gráfico interativo
     return fig
 
-########################################
-
-def extract_ticker(index:str, field:str, start_date='1970-01-01', end_date=datetime.now(), override_period:str=None, apply_transform=True, asset_class='Equity Index'):
-    """
-        override_period: eg. 1BF, 2BF 
-    """
-    start_date = pd.to_datetime(start_date).strftime('%Y-%m-%d')
-    end_date = pd.to_datetime(end_date).strftime('%Y-%m-%d')
-    
-    # Check if override_period column exists
-    override_column_exists = pd.read_sql(
-        sql=f"""
-            SELECT 1
-            FROM information_schema.columns 
-            WHERE table_schema = '{settings.SCHEMA}' 
-                AND table_name = 'bbg_equity_{index.lower().replace(' ', '__')}' 
-                AND column_name = 'override_period'
-        """,
-        con=settings.ENGINE
-    ).empty
-    
-    # Get SQL
-    if not override_column_exists:
-        sql = f"""
-                SELECT e.*
-                FROM public.bbg_equity_{index.lower().replace(' ', '__')} e
-                WHERE e.ticker = '{index}'
-                    AND e.field = '{field}'
-                    {"AND e.override_period = '" + override_period + "'" if override_period else ""}
-                    AND e."date" BETWEEN '{start_date}' AND '{end_date}'\
-                ORDER BY "date" ASC, extraction_date DESC
-            """
-    else:
-        sql = f"""
-                SELECT e.*
-                FROM public.bbg_equity_{index.lower().replace(' ', '__')} e
-                WHERE e.ticker = '{index}'
-                    AND e.field = '{field}'
-                    AND e."date" BETWEEN '{start_date}' AND '{end_date}'\
-                ORDER BY "date" ASC, extraction_date DESC
-            """
-    df = pd.read_sql(
-        sql=sql,
-        con=settings.ENGINE
-    )
-
-    if df.empty:
-        return pd.DataFrame()
-    
-    df = df.drop_duplicates(subset=['date', 'ticker', 'field'], keep='first').sort_index()
-
-    # if override_period:
-    #     df['field'] = df.apply(lambda row:
-    #             f"{row['field']}_{row['override_period']}" if row['override'] else row['field'] 
-    #             , axis=1)
-
-    pivot_df = df.pivot_table(index=['date'], columns='field', values='value').reset_index()
-    pivot_df['date'] = pd.to_datetime(pivot_df['date'])
-    pivot_df.set_index('date', inplace=True)
-    pivot_df = pivot_df.sort_index()
-    pivot_df = pivot_df.rename(columns={field: index})
-
-    # QUARTERLY no consensus
-    if apply_transform and not 'VARIATION' in field.upper():
-        fields_df = pd.read_sql(
-            sql=f"""
-                SELECT * FROM {settings.BBG_DICT_FIELDS}
-                WHERE "class" = '{asset_class}'
-                    AND field = '{field}'
-                LIMIT 1
-            """,
-            con=settings.ENGINE
-        )
-        field_dict = fields_df.iloc[0].to_dict()
-        if field_dict['period'] == 'QUARTERLY' and not field_dict['override']:
-            transformed_df = pivot_df.resample('Q').mean()
-            transformed_df.index = transformed_df.index + pd.offsets.MonthBegin(1) - pd.offsets.MonthBegin(3)
-
-            if field_dict['annualized']:
-                pass
-            elif not field_dict['annualized'] and field_dict['aggregation_type'] == 'MEAN':
-                transformed_df = transformed_df.rolling(window=4, min_periods=4).apply(accumulated_mean)
-            elif not field_dict['annualized'] and field_dict['aggregation_type'] == 'SUM':
-                transformed_df = transformed_df.rolling(window=4, min_periods=4).apply(accumulated_sum)
-            else:
-                raise "[ERROR] Quarterly field type."
-            idx_extension = pd.date_range(start=start_date, end=end_date, freq='MS')
-            transformed_df = transformed_df.reindex(idx_extension)
-            transformed_df = transformed_df.fillna(method='ffill', limit=2)
-            return transformed_df
-    return pivot_df

@@ -1,11 +1,11 @@
 import xlwings as xw
 import pandas as pd
 from sqlalchemy import create_engine
-from decouple import config
 from urllib.parse import quote_plus
 from datetime import datetime, date
 import numpy as np
 import settings
+import os
 
 def execute_postgresql_query(query, schema_name=settings.SCHEMA, database=None):
     """
@@ -16,7 +16,7 @@ def execute_postgresql_query(query, schema_name=settings.SCHEMA, database=None):
     :return: Um DataFrame contendo os resultados da consulta.
     """
     try:
-        engine = create_engine(f'postgresql://{quote_plus(config("DATABASE_USER"))}:{quote_plus(config("DATABASE_PASSWORD"))}@{quote_plus(config("DATABASE_HOST"))}:{quote_plus(config("DATABASE_PORT"))}/{database or quote_plus(config("DATABASE_NAME"))}')
+        engine = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{database or quote_plus(os.environ["DATABASE_NAME"])}')
         # Defina temporariamente o search_path para o schema <schema_name>
         with engine.connect() as conn:
             conn.execute(f'SET search_path TO {schema_name}')

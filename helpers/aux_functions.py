@@ -1,16 +1,14 @@
 import pandas as pd
 from sqlalchemy import create_engine
-from decouple import config
 from urllib.parse import quote_plus
 import ffn
+import os
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-from datetime import datetime
-import settings
 
 def accumulated_mean(arr):
     if not pd.isnull(arr.iloc[-1]):  # Verifica se o valor de referência (último valor) não é NaN
@@ -64,7 +62,7 @@ def upload_dataframe_to_postgresql(df, table_name, schema_name='public', if_exis
     """
     try:
         # engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/datalake')
-        engine = create_engine(f'postgresql://{quote_plus(config("DATABASE_USER"))}:{quote_plus(config("DATABASE_PASSWORD"))}@{quote_plus(config("DATABASE_HOST"))}:{quote_plus(config("DATABASE_PORT"))}/{quote_plus(config("DATABASE_NAME"))}',
+        engine = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{quote_plus(os.environ["DATABASE_NAME"])}',
                                connect_args={'options': '-csearch_path={}'.format(schema_name)})
         
         # Defina temporariamente o search_path para o schema <schema_name>
@@ -87,7 +85,7 @@ def execute_postgresql_query(query, schema_name='public', database=None):
     :return: Um DataFrame contendo os resultados da consulta.
     """
     try:
-        engine = create_engine(f'postgresql://{quote_plus(config("DATABASE_USER"))}:{quote_plus(config("DATABASE_PASSWORD"))}@{quote_plus(config("DATABASE_HOST"))}:{quote_plus(config("DATABASE_PORT"))}/{database or quote_plus(config("DATABASE_NAME"))}')
+        engine = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{database or quote_plus(os.environ["DATABASE_NAME"])}')
         # Defina temporariamente o search_path para o schema <schema_name>
         with engine.connect() as conn:
             conn.execute(f'SET search_path TO {schema_name}')
