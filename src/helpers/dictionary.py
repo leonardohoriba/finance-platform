@@ -1,5 +1,5 @@
 import pandas as pd
-import settings
+from utils.settings import *
 from datetime import datetime, date, timedelta
 import os
 from helpers.aux_functions import execute_postgresql_query, upload_dataframe_to_postgresql
@@ -7,22 +7,22 @@ from helpers.aux_functions import execute_postgresql_query, upload_dataframe_to_
 
 class UpdateDictionary():
     def __init__(self) -> None:
-        self.tickers_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Tickers')
-        self.fields_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Fields')
-        self.overrides_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Overrides')
-        self.currency_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Currency')
-        self.rates_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Rates')
-        self.rates_monetary_policy_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Rates MP')
-        self.bonds_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Bonds')
-        self.housing_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Housing')
-        self.commodities_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Commodities')
-        self.economics_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Economics')
-        self.proprietary_economic_index_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Proprietary Economic Index')
-        self.update_equity_vol_assets_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Equity Vol Assets')
+        self.tickers_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Tickers')
+        self.fields_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Fields')
+        self.overrides_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Overrides')
+        self.currency_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Currency')
+        self.rates_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Rates')
+        self.rates_monetary_policy_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Rates MP')
+        self.bonds_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Bonds')
+        self.housing_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Housing')
+        self.commodities_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Commodities')
+        self.economics_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Economics')
+        self.proprietary_economic_index_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Proprietary Economic Index')
+        self.update_equity_vol_assets_df = pd.read_excel(DICT_BBG_PATH, sheet_name='Equity Vol Assets')
         # Factset
-        self.fs_fields_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='FS_Fields')
+        self.fs_fields_df = pd.read_excel(DICT_BBG_PATH, sheet_name='FS_Fields')
         # Datastream
-        self.ds_economics_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='DS_Economics')
+        self.ds_economics_df = pd.read_excel(DICT_BBG_PATH, sheet_name='DS_Economics')
         pass
 
     def update_tickers(self):

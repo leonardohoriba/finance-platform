@@ -4,10 +4,10 @@ from sqlalchemy import create_engine
 from urllib.parse import quote_plus
 from datetime import datetime, date
 import numpy as np
-import settings
+from src.utils.settings import *
 import os
 
-def execute_postgresql_query(query, schema_name=settings.SCHEMA, database=None):
+def execute_postgresql_query(query, schema_name=SCHEMA, database=None):
     """
     Executa uma consulta SQL no banco de dados PostgreSQL e retorna os resultados como um DataFrame.
 

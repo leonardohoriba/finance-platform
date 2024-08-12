@@ -62,6 +62,7 @@ services:
     depends_on:
       - airflow_db
       - redis
+      - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__WEBSERVER__SECRET_KEY: S5KrlPywjdvpZuLlXTnjsg==
