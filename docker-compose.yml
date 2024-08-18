@@ -156,7 +156,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: C:/Users/leona/Projects/datalake
+      device: ./data
       o: bind
       
   airflow_data:
