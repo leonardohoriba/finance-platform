@@ -32,7 +32,7 @@ services:
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=postgres
       - DATABASE_DB=datalake
-      - DATABASE_HOST=postgres
+      - DATABASE_HOST=host.docker.internal
 
   airflow_db:
     image: postgres:16
