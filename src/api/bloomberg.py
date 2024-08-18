@@ -50,7 +50,7 @@ class BbgEquityIndexExtract():
             # ESTIMATE
             print('[DOWNLOAD] Estimate Data')
             estimate_df = pd.DataFrame()
-            df_aux = self.fields_df[self.fields_df['override'] == 'Y']
+            df_aux = self.fields_df[self.fields_df['override'] == True]
             df_aux = df_aux[df_aux['period'] == 'DAILY']
             estimate_fields = df_aux['field'].to_list()
             if estimate_fields:
@@ -76,7 +76,7 @@ class BbgEquityIndexExtract():
 
             # DAILY
             print('[DOWNLOAD] Daily Data')
-            df_aux = self.fields_df[self.fields_df['override'] == 'N']
+            df_aux = self.fields_df[self.fields_df['override'] == False]
             df_aux = df_aux[df_aux['period'] == 'DAILY']
             daily_fields = df_aux['field'].to_list()
             if daily_fields:
@@ -105,7 +105,7 @@ class BbgEquityIndexExtract():
             
             # QUARTERLY
             print('[DOWNLOAD] Quarterly Data')
-            df_aux = self.fields_df[self.fields_df['override'] == 'N']
+            df_aux = self.fields_df[self.fields_df['override'] == False]
             df_aux = df_aux[df_aux['period'] == 'QUARTERLY']
             quarterly_fields = df_aux['field'].to_list()
             if quarterly_fields:
