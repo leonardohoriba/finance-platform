@@ -137,7 +137,7 @@ class BbgRatesUpdatePrices():
         tickers_df = execute_postgresql_query(query=f"""
             SELECT * FROM public.bbg_dict_rates;
         """)
-        return tickers_df['ticker'].drop_duplicates().to_list()
+        return tickers_df['bbg_ticker'].drop_duplicates().to_list()
 
     def extract(self, ticker_list=[]):
         tickers = self.__get_rates_tickers()
@@ -173,7 +173,7 @@ class BbgRatesMonetaryPolicyUpdatePrices():
         tickers_df = execute_postgresql_query(query=f"""
             SELECT * FROM public.bbg_dict_rates_monetary_policy;
         """)
-        return tickers_df['ticker'].drop_duplicates().to_list()
+        return tickers_df['bbg_ticker'].drop_duplicates().to_list()
 
     def extract(self, ticker_list=[]):
         """
@@ -218,9 +218,9 @@ class BbgHousingUpdatePrices():
         weekly_df = self.dict_df[self.dict_df['frequency'] == 'WEEKLY']
         monthly_df = self.dict_df[self.dict_df['frequency'] == 'MONTHLY']
 
-        daily_tickers_list = daily_df['ticker'].dropna().drop_duplicates().to_list()
-        weekly_tickers_list = weekly_df['ticker'].dropna().drop_duplicates().to_list()
-        monthly_tickers_list = monthly_df['ticker'].dropna().drop_duplicates().to_list()
+        daily_tickers_list = daily_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        weekly_tickers_list = weekly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        monthly_tickers_list = monthly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
 
         # DAILY
         # PX_Last
@@ -304,10 +304,10 @@ class BbgEconomicsUpdatePrices():
         quarterly_df = self.dict_df[self.dict_df['period'] == 'Q']
         yearly_df = self.dict_df[self.dict_df['period'] == 'Y']
 
-        daily_tickers_list = daily_df['ticker'].dropna().drop_duplicates().to_list()
-        monthly_tickers_list = monthly_df['ticker'].dropna().drop_duplicates().to_list()
-        quarterly_tickers_list = quarterly_df['ticker'].dropna().drop_duplicates().to_list()
-        yearly_tickers_list = yearly_df['ticker'].dropna().drop_duplicates().to_list()
+        daily_tickers_list = daily_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        monthly_tickers_list = monthly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        quarterly_tickers_list = quarterly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        yearly_tickers_list = yearly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
 
         # DAILY
         if len(daily_tickers_list) > 0:
@@ -532,9 +532,9 @@ class BbgCommoditiesUpdatePrices():
         weekly_df = self.dict_df[self.dict_df['frequency'] == 'WEEKLY']
         monthly_df = self.dict_df[self.dict_df['frequency'] == 'MONTHLY']
 
-        daily_tickers_list = daily_df['ticker'].dropna().drop_duplicates().to_list()
-        weekly_tickers_list = weekly_df['ticker'].dropna().drop_duplicates().to_list()
-        monthly_tickers_list = monthly_df['ticker'].dropna().drop_duplicates().to_list()
+        daily_tickers_list = daily_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        weekly_tickers_list = weekly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
+        monthly_tickers_list = monthly_df['bbg_ticker'].dropna().drop_duplicates().to_list()
 
         # DAILY
         if len(daily_tickers_list) > 0:
@@ -607,7 +607,7 @@ class BbgBondsUpdatePrices():
         tickers_df = execute_postgresql_query(query=f"""
             SELECT * FROM public.bbg_dict_bonds;
         """)
-        return tickers_df['ticker'].drop_duplicates().to_list()
+        return tickers_df['bbg_ticker'].drop_duplicates().to_list()
     
     def extract(self, ticker_list=[]):
         tickers = self.__get_bonds_tickers()
