@@ -12,7 +12,6 @@ class BbgEquityIndexExtract():
     def __init__(self, start_date='20000101', end_date=datetime.now().strftime('%Y%m%d')) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.index_tickers = self.__get_index_tickers()
         self.fields_df = self.__get_fields_df()
         self.overrides_df = self.__get_overrides_df()
@@ -21,17 +20,23 @@ class BbgEquityIndexExtract():
 
     def __get_index_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Tickers')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_tickers;
+        """)
         tickers_df = tickers_df[tickers_df['class'] == self.CLASS_NAME]
         return tickers_df['bbg_ticker'].to_list()
 
     def __get_fields_df(self):
-        fields_df = pd.read_excel(self.dict_path, sheet_name='Fields')
+        fields_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_fields;
+        """)
         fields_df = fields_df[fields_df['class'] == self.CLASS_NAME]
         return fields_df
     
     def __get_overrides_df(self):
-        overrides_df = pd.read_excel(self.dict_path, sheet_name='Overrides')
+        overrides_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_overrides;
+        """)
         return overrides_df
 
     def extract(self, index_list=[]):
@@ -124,13 +129,14 @@ class BbgRatesUpdatePrices():
     def __init__(self, start_date, end_date) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
 
     def __get_rates_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Rates')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_rates;
+        """)
         return tickers_df['bbg_ticker'].drop_duplicates().to_list()
 
     def extract(self, ticker_list=[]):
@@ -159,13 +165,14 @@ class BbgRatesMonetaryPolicyUpdatePrices():
     def __init__(self, start_date, end_date) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
 
     def __get_rates_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Rates MP')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_rates_monetary_policy;
+        """)
         return tickers_df['bbg_ticker'].drop_duplicates().to_list()
 
     def extract(self, ticker_list=[]):
@@ -197,7 +204,9 @@ class BbgHousingUpdatePrices():
     def __init__(self, start_date=datetime.now().strftime('%Y%m%d'), end_date=datetime.now().strftime('%Y%m%d')) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
+        self.dict_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_housing;
+        """)
         self.start_date = start_date
         self.end_date = end_date
 
@@ -280,7 +289,9 @@ class BbgEconomicsUpdatePrices():
         ) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
+        self.dict_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_economics;
+        """)
         self.start_date = start_date
         self.end_date = end_date
 
@@ -382,28 +393,35 @@ class BbgCurrencyUpdatePrices():
     def __init__(self, start_date, end_date) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
 
     def __get_current_account_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Currency')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_currency;
+        """)
         return tickers_df['CA'].drop_duplicates().to_list()
     
     def __get_current_price_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Currency')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_currency;
+        """)
         return tickers_df['Current price'].drop_duplicates().to_list()
     
     def __get_implied_volatility_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Currency')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_currency;
+        """)
         return tickers_df['Implied Vol 1m'].drop_duplicates().to_list() + tickers_df['Implied Vol 3m'].drop_duplicates().to_list() + tickers_df['Implied Vol 6m'].drop_duplicates().to_list() + tickers_df['Implied Vol 12m'].drop_duplicates().to_list()
     
     def __get_points_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name='Currency')
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_currency;
+        """)
         return tickers_df['Points 1m'].drop_duplicates().to_list() + tickers_df['Points 3m'].drop_duplicates().to_list() + tickers_df['Points 6m'].drop_duplicates().to_list() + tickers_df['Points 12m'].drop_duplicates().to_list()
 
     def extract_current_account(self):
@@ -483,9 +501,9 @@ class BbgCurrencyUpdatePrices():
         return True
 
     def extract(self):
-        # self.update_current_account()
-        # self.update_current_price()
-        # self.update_implied_volatility()
+        self.update_current_account()
+        self.update_current_price()
+        self.update_implied_volatility()
         self.update_points()
         self.con.stop()
         return True
@@ -500,7 +518,9 @@ class BbgCommoditiesUpdatePrices():
         ) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
+        self.dict_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_commodities;
+        """)
         self.start_date = start_date
         self.end_date = end_date
 
@@ -579,13 +599,14 @@ class BbgBondsUpdatePrices():
     def __init__(self, start_date, end_date) -> None:
         # Open connection
         self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
-        self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
 
     def __get_bonds_tickers(self):
         # Get Dict Data
-        tickers_df = pd.read_excel(self.dict_path, sheet_name=self.CLASS_NAME)
+        tickers_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_bonds;
+        """)
         return tickers_df['bbg_ticker'].drop_duplicates().to_list()
     
     def extract(self, ticker_list=[]):
