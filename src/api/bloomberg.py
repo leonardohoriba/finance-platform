@@ -501,10 +501,10 @@ class BbgCurrencyUpdatePrices():
         return True
 
     def extract(self):
-        self.update_current_account()
-        self.update_current_price()
-        self.update_implied_volatility()
-        self.update_points()
+        self.extract_current_account()
+        self.extract_current_price()
+        self.extract_implied_volatility()
+        self.extract_points()
         self.con.stop()
         return True
 
