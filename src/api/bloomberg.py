@@ -415,15 +415,25 @@ class BbgCurrencyUpdatePrices():
         tickers_df = execute_postgresql_query(query=f"""
             SELECT * FROM public.bbg_dict_currency;
         """)
-        return tickers_df['Implied Vol 1m'].drop_duplicates().to_list() + tickers_df['Implied Vol 3m'].drop_duplicates().to_list() + tickers_df['Implied Vol 6m'].drop_duplicates().to_list() + tickers_df['Implied Vol 12m'].drop_duplicates().to_list()
+        return {
+            'Implied Vol 1m': tickers_df['Implied Vol 1m'].drop_duplicates().to_list(),
+            'Implied Vol 3m': tickers_df['Implied Vol 3m'].drop_duplicates().to_list(),
+            'Implied Vol 6m': tickers_df['Implied Vol 6m'].drop_duplicates().to_list(),
+            'Implied Vol 12m': tickers_df['Implied Vol 12m'].drop_duplicates().to_list()
+        } 
     
     def __get_points_tickers(self):
         # Get Dict Data
         tickers_df = execute_postgresql_query(query=f"""
             SELECT * FROM public.bbg_dict_currency;
         """)
-        return tickers_df['Points 1m'].drop_duplicates().to_list() + tickers_df['Points 3m'].drop_duplicates().to_list() + tickers_df['Points 6m'].drop_duplicates().to_list() + tickers_df['Points 12m'].drop_duplicates().to_list()
-
+        return {
+            'Points 1m': tickers_df['Points 1m'].drop_duplicates().to_list(),
+            'Points 3m': + tickers_df['Points 3m'].drop_duplicates().to_list(),
+            'Points 6m': + tickers_df['Points 6m'].drop_duplicates().to_list(),
+            'Points 12m': + tickers_df['Points 12m'].drop_duplicates().to_list()
+        }
+    
     def extract_current_account(self):
         tickers = self.__get_current_account_tickers()
         for i in range(0, len(tickers), self.CHUNK_SIZE):
@@ -463,41 +473,43 @@ class BbgCurrencyUpdatePrices():
         return True
     
     def extract_implied_volatility(self):
-        tickers = self.__get_implied_volatility_tickers()
-        for i in range(0, len(tickers), self.CHUNK_SIZE):
-            ticker_list = tickers[i: i+self.CHUNK_SIZE]
-            # PX_Last
-            print('[DOWNLOAD] PX_Last')
-            px_last_df = self.con.bdh(ticker_list, 'PX_Last', start_date=self.start_date, end_date=self.end_date, elms=[("periodicitySelection", "DAILY")])
-            if not px_last_df.empty: 
-                px_last_df = px_last_df.melt(ignore_index=False).dropna(subset=['value'])
-                px_last_wide_df = px_last_df.pivot(columns='ticker', values='value')
-                for index in px_last_wide_df:
-                    index_df = px_last_wide_df[index].reset_index().rename(columns={index: 'value'})
-                    index_df['ticker'] = index
-                    index_df['field'] = 'PX_Last'
-                    index_df['extraction_date'] = datetime.now()
-                    index_df = index_df.dropna(subset=['value'])
-                    upload_dataframe_to_postgresql(index_df, table_name=utils.settings.BBG_CURRENCY_IMPLIED_VOLATILITY_TABLE)
+        for category, tickers in self.__get_implied_volatility_tickers().items():
+            print(f"[EXTRACT] {category}")
+            for i in range(0, len(tickers), self.CHUNK_SIZE):
+                ticker_list = tickers[i: i+self.CHUNK_SIZE]
+                # PX_Last
+                print('[DOWNLOAD] PX_Last')
+                px_last_df = self.con.bdh(ticker_list, 'PX_Last', start_date=self.start_date, end_date=self.end_date, elms=[("periodicitySelection", "DAILY")])
+                if not px_last_df.empty: 
+                    px_last_df = px_last_df.melt(ignore_index=False).dropna(subset=['value'])
+                    px_last_wide_df = px_last_df.pivot(columns='ticker', values='value')
+                    for index in px_last_wide_df:
+                        index_df = px_last_wide_df[index].reset_index().rename(columns={index: 'value'})
+                        index_df['ticker'] = index
+                        index_df['field'] = 'PX_Last'
+                        index_df['extraction_date'] = datetime.now()
+                        index_df = index_df.dropna(subset=['value'])
+                        upload_dataframe_to_postgresql(index_df, table_name=utils.settings.BBG_CURRENCY_IMPLIED_VOLATILITY_TABLE)
         return True
     
     def extract_points(self):
-        tickers = self.__get_points_tickers()
-        for i in range(0, len(tickers), self.CHUNK_SIZE):
-            ticker_list = tickers[i: i+self.CHUNK_SIZE]
-            # PX_Last
-            print('[DOWNLOAD] PX_Last')
-            px_last_df = self.con.bdh(ticker_list, 'PX_Last', start_date=self.start_date, end_date=self.end_date, elms=[("periodicitySelection", "DAILY")])
-            if not px_last_df.empty: 
-                px_last_df = px_last_df.melt(ignore_index=False).dropna(subset=['value'])
-                px_last_wide_df = px_last_df.pivot(columns='ticker', values='value')
-                for index in px_last_wide_df:
-                    index_df = px_last_wide_df[index].reset_index().rename(columns={index: 'value'})
-                    index_df['ticker'] = index
-                    index_df['field'] = 'PX_Last'
-                    index_df['extraction_date'] = datetime.now()
-                    index_df = index_df.dropna(subset=['value'])
-                    upload_dataframe_to_postgresql(index_df, table_name=utils.settings.BBG_CURRENCY_POINTS_TABLE)
+        for category, tickers in self.__get_points_tickers().items():
+            print(f"[EXTRACT] {category}")
+            for i in range(0, len(tickers), self.CHUNK_SIZE):
+                ticker_list = tickers[i: i+self.CHUNK_SIZE]
+                # PX_Last
+                print('[DOWNLOAD] PX_Last')
+                px_last_df = self.con.bdh(ticker_list, 'PX_Last', start_date=self.start_date, end_date=self.end_date, elms=[("periodicitySelection", "DAILY")])
+                if not px_last_df.empty: 
+                    px_last_df = px_last_df.melt(ignore_index=False).dropna(subset=['value'])
+                    px_last_wide_df = px_last_df.pivot(columns='ticker', values='value')
+                    for index in px_last_wide_df:
+                        index_df = px_last_wide_df[index].reset_index().rename(columns={index: 'value'})
+                        index_df['ticker'] = index
+                        index_df['field'] = 'PX_Last'
+                        index_df['extraction_date'] = datetime.now()
+                        index_df = index_df.dropna(subset=['value'])
+                        upload_dataframe_to_postgresql(index_df, table_name=utils.settings.BBG_CURRENCY_POINTS_TABLE)
         return True
 
     def extract(self):
