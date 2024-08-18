@@ -11,7 +11,7 @@ class BbgEquityIndexExtract():
 
     def __init__(self, start_date='20000101', end_date=datetime.now().strftime('%Y%m%d')) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.index_tickers = self.__get_index_tickers()
         self.fields_df = self.__get_fields_df()
@@ -123,7 +123,7 @@ class BbgRatesUpdatePrices():
     CHUNK_SIZE = 30
     def __init__(self, start_date, end_date) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
@@ -158,7 +158,7 @@ class BbgRatesMonetaryPolicyUpdatePrices():
     CHUNK_SIZE = 30
     def __init__(self, start_date, end_date) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
@@ -196,7 +196,7 @@ class BbgHousingUpdatePrices():
     CHUNK_SIZE = 5
     def __init__(self, start_date=datetime.now().strftime('%Y%m%d'), end_date=datetime.now().strftime('%Y%m%d')) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
         self.start_date = start_date
         self.end_date = end_date
@@ -279,7 +279,7 @@ class BbgEconomicsUpdatePrices():
             end_date=datetime.now().strftime('%Y%m%d')
         ) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
         self.start_date = start_date
         self.end_date = end_date
@@ -381,7 +381,7 @@ class BbgCurrencyUpdatePrices():
     CHUNK_SIZE = 10
     def __init__(self, start_date, end_date) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
@@ -499,7 +499,7 @@ class BbgCommoditiesUpdatePrices():
             end_date=datetime.now().strftime('%Y%m%d')
         ) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_df = pd.read_excel(utils.settings.DICT_BBG_PATH, sheet_name=self.CLASS_NAME)
         self.start_date = start_date
         self.end_date = end_date
@@ -578,7 +578,7 @@ class BbgBondsUpdatePrices():
     CHUNK_SIZE = 5
     def __init__(self, start_date, end_date) -> None:
         # Open connection
-        self.con = pdblp.BCon(debug=False, port=8194, timeout=60000).start()
+        self.con = pdblp.BCon(debug=False, host='host.docker.internal', port=8194, timeout=60000).start()
         self.dict_path = f'{utils.settings.DRIVE_BLOOMBERG_PATH}\\Dict_bbg.xlsx'
         self.start_date = start_date
         self.end_date = end_date
