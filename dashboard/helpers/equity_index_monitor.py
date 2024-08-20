@@ -429,7 +429,15 @@ def equity_index_monitor_df():
 
     # -=-=-=-=-=-=-=-=-=-=-=-=-=-= -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     # Merge dict
-    dict_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Tickers')
+    dict_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_tickers;
+    """)
+    dict_df = dict_df.rename(columns={
+        'ticker': 'bbg_ticker',
+        'gics_sector_name': 'GICS_SECTOR_NAME',
+        'gics_industry_name': 'GICS_INDUSTRY_NAME',
+        'gics_sub_industry_name': 'GICS_SUB_INDUSTRY_NAME',
+    })
     dict_df = dict_df[dict_df['class'] == 'Equity Index']
     em_dict_df = dict_df[['country', 'bbg_ticker', 'country_classification', 'description', 'CRNCY']]
     final_df = pd.merge(right=final_df, right_on='Index', left=em_dict_df, left_on='bbg_ticker', how='inner').drop_duplicates().rename(columns={
@@ -467,92 +475,10 @@ def equity_index_monitor_df():
         DELTA_EPS_2BF_T12M_CONT_OPS_df
     )
 
-
-def factset_weights():
-    dict_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Tickers')
-    dict_df = dict_df[dict_df['class'] == 'Equity Index']
-    dict_df = dict_df[['country', 'bbg_ticker', 'factset_ticker']]
-    query = """
-        WITH max_date_table AS (
-                SELECT 
-                    w."requestId", MAX(w."date") AS max_date
-                FROM public.factset_weights w
-                GROUP BY w."requestId"
-            )
-            SELECT DISTINCT
-                w.*,
-                s."FG_FACTSET_SECTOR",
-                s."FG_FACTSET_IND",
-                s."FREF_ENTITY_NAICS_CODE(SECT,NAME,RANK1)",
-                s."FREF_ENTITY_NAICS_CODE(SUBSECT,NAME,RANK1)",
-                s."FREF_ENTITY_NAICS_CODE(INDGRP,NAME,RANK1)",
-                s."FREF_ENTITY_NAICS_CODE(INDUSTRY,NAME,RANK1)",
-                s."FR_RBICS_NAME_CURR(SECT)",
-                s."FG_GICS_SECTOR",
-                s."FG_GICS_INDUSTRY",
-                s."FG_GICS_INDGRP",
-                s."FG_GICS_SUBIND",
-                s."FG_FACTSET_ECONOMY"
-            FROM public.factset_weights w
-            INNER JOIN max_date_table mw ON w."date" = mw.max_date AND w."requestId" = mw."requestId"
-            LEFT JOIN public.factset_sectors s ON w."securityTicker" = s."requestId"
-            ORDER BY w."requestId", w."weightClose" DESC;
-    """
-    df = execute_postgresql_query(query=query)
-    df = df[[
-        'requestId',
-        'date',
-        'weightClose',
-        'securityName',
-        'FG_FACTSET_SECTOR',
-        'FG_FACTSET_IND',
-        'FG_FACTSET_ECONOMY',
-        'FREF_ENTITY_NAICS_CODE(SECT,NAME,RANK1)',
-        'FREF_ENTITY_NAICS_CODE(SUBSECT,NAME,RANK1)',
-        "FREF_ENTITY_NAICS_CODE(INDGRP,NAME,RANK1)",
-        "FREF_ENTITY_NAICS_CODE(INDUSTRY,NAME,RANK1)",
-    ]].rename(columns={
-        'requestId': 'index',
-        'securityName': 'ticker',
-        'FG_FACTSET_SECTOR': 'factset_sector',
-        'FG_FACTSET_IND': 'factset_industry',
-        'FG_FACTSET_ECONOMY': 'factset_economy',
-        'FREF_ENTITY_NAICS_CODE(SECT,NAME,RANK1)': 'naics_sector',
-        'FREF_ENTITY_NAICS_CODE(SUBSECT,NAME,RANK1)': 'naics_sub_sector',
-        'FREF_ENTITY_NAICS_CODE(INDGRP,NAME,RANK1)': 'naics_industry_group',
-        'FREF_ENTITY_NAICS_CODE(INDUSTRY,NAME,RANK1)': 'naics_industry'
-    })
-    df = pd.merge(right=dict_df, right_on='factset_ticker', left=df, left_on='index', how='inner').drop_duplicates()
-    df['index'] = df['bbg_ticker'].str.replace(" Index", "")
-    df['index'] = df['index'].str.replace(" Equity", "")
-
-    # economy_df = df.pivot_table(index='factset_economy', columns='index', values='weightClose', aggfunc='sum')
-    # economy_df.index.name = 'Economy'
-    
-    # ------------ WEIGHTS
-    grouped = df.groupby(['index', 'factset_economy'])['weightClose'].sum().reset_index()
-
-    # Em seguida, calcule o peso total por índice
-    total_weight = df.groupby('index')['weightClose'].sum().reset_index()
-    total_weight.rename(columns={'weightClose': 'totalWeight'}, inplace=True)
-
-    # Faça um merge entre os DataFrames grouped e total_weight
-    result = pd.merge(grouped, total_weight, on='index')
-
-    # Calcule o percentual de peso para cada setor em cada índice
-    result['percentualPeso'] = (result['weightClose'] / result['totalWeight']) * 100
-
-    # O DataFrame result agora conterá o percentual de peso de cada setor em cada índice
-    result = result.pivot(index='factset_economy', columns='index', values='percentualPeso').rename(columns={'percentualPeso': 'weightClose'})
-    
-    # Sort columns
-    df = df.reindex(sorted(df.columns), axis=1)
-    result = result.reindex(sorted(result.columns), axis=1)
-
-    return df, result
-
 def get_rates():
-    dict_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Rates')
+    dict_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_rates;
+    """)
     dict_df['name'] = dict_df['rate'] + ' (' + dict_df['currency'] + ')'
     column_dict = dict_df[['bbg_ticker', 'name']].set_index('bbg_ticker').to_dict()['name']
     query = """

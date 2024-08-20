@@ -1,12 +1,12 @@
 import streamlit as st
 from datetime import datetime, date
-from helpers.equity_index_monitor import equity_index_monitor_df, factset_weights, get_rates, get_us_recession
+from helpers.equity_index_monitor import equity_index_monitor_df, get_rates
 import pandas as pd
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 import settings
-from helpers.aux_functions import plot_series, plot_boxplot, plot_series_multiple_y_axis, plot_scatter, index_number, start_end_dates, plot_beta_scatter_plot
+from helpers.aux_functions import plot_series, plot_boxplot, plot_series_multiple_y_axis, plot_scatter, index_number, start_end_dates, execute_postgresql_query
 import plotly.express as px
 # Config
 logo = Image.open("images/favicon.png")
@@ -99,22 +99,21 @@ with open('style.css') as f:
 def highlight_none(val):
     return 'background-color: transparent' if pd.isna(val) else ''
 
-# Functions
-# @st.cache_data
-# def handle_factset_weight_df():
-#     weights_df, economy_df = factset_weights()
-#     return weights_df, economy_df
-
-# @st.cache_data
-# def handle_us_recession():
-#     return get_us_recession()
-# us_recession_df = handle_us_recession()
-
 @st.cache_data
 def handle_rates_tickers_dict():
-    df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Tickers')
+    df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_tickers;
+    """)
+    df = df.rename(columns={
+        'ticker': 'bbg_ticker',
+        'gics_sector_name': 'GICS_SECTOR_NAME',
+        'gics_industry_name': 'GICS_INDUSTRY_NAME',
+        'gics_sub_industry_name': 'GICS_SUB_INDUSTRY_NAME',
+    })
     df = df[df['class'] == 'Equity Index'][['bbg_ticker', 'CRNCY']]
-    rates_df = pd.read_excel(settings.DICT_BBG_PATH, sheet_name='Rates')
+    rates_df = execute_postgresql_query(query=f"""
+            SELECT * FROM public.bbg_dict_rates;
+    """)
     merge_df = df.merge(rates_df, left_on='CRNCY', right_on='currency').rename(columns={'bbg_ticker_x': 'bbg_ticker'})
     return merge_df[['bbg_ticker', 'currency']].drop_duplicates().dropna()
 rates_tickers_dict_df = handle_rates_tickers_dict()

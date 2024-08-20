@@ -6,7 +6,6 @@ root = os.getcwd()
 
 DRIVE_BLOOMBERG_PATH = 'Pesquisa Sistemática\\Bloomberg Data'
 DATALAKE_PATH = 'Datalake'
-DICT_BBG_PATH = os.path.join(root, 'utils', 'Dict_bbg.xlsx')
 ADD_IN_TEMPLATE_PATH = os.path.join(root, 'utils', 'template.xlsm')
 ENGINE = create_engine(f'postgresql://{quote_plus(os.environ["DATABASE_USER"])}:{quote_plus(os.environ["DATABASE_PASSWORD"])}@{quote_plus(os.environ["DATABASE_HOST"])}:{quote_plus(os.environ["DATABASE_PORT"])}/{quote_plus(os.environ["DATABASE_NAME"])}')
 
